@@ -1,0 +1,314 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ------------------------------------------------------
+// USER & IDENTITY
+// ------------------------------------------------------
+
+model User {
+  id           String    @id @default(uuid())
+  userId       String    @unique
+  password     String
+  role         String    // ADMIN, HOD, FACULTY, STUDENT
+  departmentId String?   // References Department.id
+  isFirstLogin Boolean   @default(true)
+  isActive     Boolean   @default(true)
+
+  // Audit Fields
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+  createdBy    String?
+  updatedBy    String?
+  deletedBy    String?
+
+  // Relationships
+  facultyProfile Faculty?
+  studentProfile Student?
+  department     Department? @relation("UserDepartment", fields: [departmentId], references: [id])
+}
+
+// ------------------------------------------------------
+// CORE ACADEMIC STRUCTURE
+// ------------------------------------------------------
+
+model Institution {
+  id           String       @id @default(uuid())
+  name         String       @unique
+  code         String       @unique
+  departments  Department[]
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+}
+
+model Department {
+  id            String       @id @default(uuid())
+  institutionId String
+  name          String
+  code          String       @unique
+  
+  institution   Institution  @relation(fields: [institutionId], references: [id])
+  users         User[]       @relation("UserDepartment")
+  programs      Program[]
+  rooms         Room[]
+  subjects      Subject[]
+  timetables    Timetable[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+}
+
+model Program {
+  id           String      @id @default(uuid())
+  departmentId String
+  name         String
+  code         String      @unique
+  
+  department   Department  @relation(fields: [departmentId], references: [id])
+  students     Student[]
+  sections     Section[]
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+}
+
+model AcademicYear {
+  id        String     @id @default(uuid())
+  name      String     @unique // e.g., "2026-2027"
+  startDate DateTime
+  endDate   DateTime
+  semesters Semester[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Semester {
+  id             String       @id @default(uuid())
+  academicYearId String
+  name           String       // e.g., "Fall", "Spring"
+  
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+  timetables     Timetable[]
+  sections       Section[]
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+}
+
+model Section {
+  id          String    @id @default(uuid())
+  programId   String
+  semesterId  String
+  name        String    // e.g., "A", "B"
+  
+  program     Program   @relation(fields: [programId], references: [id])
+  semester    Semester  @relation(fields: [semesterId], references: [id])
+  students    Student[]
+  entries     TimetableEntry[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@unique([programId, semesterId, name])
+}
+
+// ------------------------------------------------------
+// PEOPLE
+// ------------------------------------------------------
+
+model Faculty {
+  id           String    @id @default(uuid())
+  userId       String    @unique
+  firstName    String
+  lastName     String
+  phoneNumber  String?
+  
+  user         User      @relation(fields: [userId], references: [id])
+  assignments  TimetableEntry[]
+  substitutions SubstitutionRecord[] @relation("Substitute")
+  absences      SubstitutionRecord[] @relation("AbsentFaculty")
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+}
+
+model Student {
+  id           String    @id @default(uuid())
+  userId       String    @unique
+  programId    String
+  sectionId    String
+  firstName    String
+  lastName     String
+  
+  user         User      @relation(fields: [userId], references: [id])
+  program      Program   @relation(fields: [programId], references: [id])
+  section      Section   @relation(fields: [sectionId], references: [id])
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+}
+
+// ------------------------------------------------------
+// SUBJECTS & FACILITIES
+// ------------------------------------------------------
+
+model Subject {
+  id           String    @id @default(uuid())
+  departmentId String
+  code         String    @unique
+  name         String
+  credits      Int
+  
+  department   Department @relation(fields: [departmentId], references: [id])
+  entries      TimetableEntry[]
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+}
+
+model Building {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  rooms     Room[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+}
+
+model Room {
+  id           String    @id @default(uuid())
+  buildingId   String
+  departmentId String?   // Null if shared globally
+  name         String    // e.g., "101", "Lab A"
+  type         String    // CLASSROOM, LABORATORY
+  capacity     Int
+  
+  building     Building  @relation(fields: [buildingId], references: [id])
+  department   Department? @relation(fields: [departmentId], references: [id])
+  entries      TimetableEntry[]
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  @@unique([buildingId, name])
+}
+
+// ------------------------------------------------------
+// TIMETABLE & SCHEDULING
+// ------------------------------------------------------
+
+model Timetable {
+  id           String    @id @default(uuid())
+  departmentId String
+  semesterId   String
+  status       String    // DRAFT, PUBLISHED
+  version      Int       @default(1)
+  
+  department   Department @relation(fields: [departmentId], references: [id])
+  semester     Semester   @relation(fields: [semesterId], references: [id])
+  entries      TimetableEntry[]
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+  createdBy    String?
+
+  @@unique([departmentId, semesterId, version])
+}
+
+model TimetableEntry {
+  id           String    @id @default(uuid())
+  timetableId  String
+  subjectId    String
+  facultyId    String
+  roomId       String
+  sectionId    String
+  dayOfWeek    Int       // 1 = Monday, 5 = Friday
+  startTime    String    // "09:00"
+  endTime      String    // "10:00"
+  
+  timetable    Timetable @relation(fields: [timetableId], references: [id])
+  subject      Subject   @relation(fields: [subjectId], references: [id])
+  faculty      Faculty   @relation(fields: [facultyId], references: [id])
+  room         Room      @relation(fields: [roomId], references: [id])
+  section      Section   @relation(fields: [sectionId], references: [id])
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  // Indexes to speed up conflict detection
+  @@index([facultyId, dayOfWeek, startTime])
+  @@index([roomId, dayOfWeek, startTime])
+  @@index([sectionId, dayOfWeek, startTime])
+}
+
+model SubstitutionRecord {
+  id                String    @id @default(uuid())
+  absentFacultyId   String
+  substituteId      String?
+  date              DateTime
+  status            String    // PENDING, ASSIGNED
+  
+  absentFaculty     Faculty   @relation("AbsentFaculty", fields: [absentFacultyId], references: [id])
+  substitute        Faculty?  @relation("Substitute", fields: [substituteId], references: [id])
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  createdBy         String?
+}
+
+model ConflictRecord {
+  id           String    @id @default(uuid())
+  severity     String    // WARNING, CRITICAL
+  description  String
+  resolved     Boolean   @default(false)
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+// ------------------------------------------------------
+// SYSTEM
+// ------------------------------------------------------
+
+model Notification {
+  id           String    @id @default(uuid())
+  targetUserId String
+  title        String
+  body         String
+  isRead       Boolean   @default(false)
+
+  createdAt    DateTime  @default(now())
+}
+
+model AuditLog {
+  id           String    @id @default(uuid())
+  userId       String    // The ID of the user who performed the action
+  action       String    // e.g., "TIMETABLE_PUBLISHED"
+  entityType   String    // e.g., "Timetable"
+  entityId     String
+  oldValue     String?   
+  newValue     String?   
+
+  createdAt    DateTime  @default(now())
+}
