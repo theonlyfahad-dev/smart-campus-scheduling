@@ -114,6 +114,7 @@ model Section {
   programId   String
   semesterId  String
   name        String    // e.g., "A", "B"
+  generatedId String?   @unique // e.g. "BSCCS3A"
   
   program     Program   @relation(fields: [programId], references: [id])
   semester    Semester  @relation(fields: [semesterId], references: [id])
@@ -142,10 +143,25 @@ model Faculty {
   assignments  TimetableEntry[]
   substitutions SubstitutionRecord[] @relation("Substitute")
   absences      SubstitutionRecord[] @relation("AbsentFaculty")
+  preferences  FacultyPreference?
 
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   deletedAt    DateTime?
+}
+
+model FacultyPreference {
+  id                String   @id @default(uuid())
+  facultyId         String   @unique
+  preferredDays     String?  // e.g. "1,2,3"
+  unavailableDays   String?  // e.g. "5"
+  maxLecturesPerDay Int      @default(4)
+  preferredTime     String?  // "MORNING", "AFTERNOON", "ANY"
+  
+  faculty           Faculty  @relation(fields: [facultyId], references: [id])
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model Student {
@@ -223,10 +239,16 @@ model Timetable {
   semesterId   String
   status       String    // DRAFT, PUBLISHED
   version      Int       @default(1)
+  name         String?   // e.g. "Draft 1"
+  description  String?
+  publishedAt  DateTime?
+  isSimulation Boolean   @default(false)
+  copiedFromId String?
   
   department   Department @relation(fields: [departmentId], references: [id])
   semester     Semester   @relation(fields: [semesterId], references: [id])
   entries      TimetableEntry[]
+  conflicts    ConflictRecord[]
 
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -280,9 +302,12 @@ model SubstitutionRecord {
 
 model ConflictRecord {
   id           String    @id @default(uuid())
+  timetableId  String?
   severity     String    // WARNING, CRITICAL
   description  String
   resolved     Boolean   @default(false)
+
+  timetable    Timetable? @relation(fields: [timetableId], references: [id])
 
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -312,4 +337,24 @@ model AuditLog {
   newValue     String?   
 
   createdAt    DateTime  @default(now())
+}
+
+model ImportHistory {
+  id              String   @id @default(uuid())
+  importedBy      String
+  fileName        String
+  status          String   // SUCCESS, PARTIAL, FAILED
+  recordsImported Int      @default(0)
+  errors          String?  // JSON stringified errors
+  warnings        String?  // JSON stringified warnings
+
+  createdAt       DateTime @default(now())
+}
+
+model ImportMapping {
+  id            String   @id @default(uuid())
+  excelColumn   String   @unique
+  databaseField String
+
+  createdAt     DateTime @default(now())
 }

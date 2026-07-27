@@ -25,7 +25,7 @@ export function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
     if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
       // Forbidden, redirect to their default dashboard
       if (user.role === 'ADMIN') router.replace('/admin');
-      else if (user.role === 'HOD') router.replace('/hod');
+      else if (user.role === 'HOD') router.replace('/admin');
       else if (user.role === 'FACULTY') router.replace('/lecturer');
       else if (user.role === 'STUDENT') router.replace('/student');
       else router.replace('/unauthorized');

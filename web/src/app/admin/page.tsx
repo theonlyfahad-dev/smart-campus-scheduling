@@ -1,7 +1,7 @@
 'use client';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { Users, Building2, BookOpen, AlertCircle, ArrowUpRight } from 'lucide-react';
+import { Users, Building2, BookOpen, AlertCircle, ArrowUpRight, Activity, CalendarDays } from 'lucide-react';
 
 const usageData = [
   { name: 'CS', usage: 85 },
@@ -20,80 +20,100 @@ const activityData = [
 ];
 
 export default function AdminDashboard() {
-  const container: any = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } };
-  const item: any = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } } };
+  const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } };
+  const item = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } } };
 
-  const StatCard = ({ title, value, sub, icon: Icon, colorClass }: any) => (
-    <motion.div variants={item} whileHover={{ y: -4, transition: { duration: 0.2 } }} className="bg-card rounded-3xl p-6 shadow-soft border border-border/50 relative overflow-hidden group cursor-default">
-      <div className={`absolute top-0 right-0 w-32 h-32 -mr-12 -mt-12 rounded-full opacity-[0.03] transition-transform duration-500 group-hover:scale-[1.8] ${colorClass}`} />
+  const StatCard = ({ title, value, sub, icon: Icon, trend }: any) => (
+    <motion.div variants={item} className="group relative bg-[#0e0e11] border border-white/5 rounded-2xl p-6 overflow-hidden hover:border-white/10 transition-colors">
+      <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+      
       <div className="flex justify-between items-start mb-4">
-        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${colorClass} bg-opacity-10 text-opacity-100`}>
-          <Icon className="w-6 h-6" />
+        <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 group-hover:text-white transition-colors">
+          <Icon className="w-5 h-5" />
         </div>
-        <div className="flex items-center text-xs font-bold text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-full shadow-sm">
-          +12% <ArrowUpRight className="w-3 h-3 ml-1" />
+        <div className="flex items-center gap-1 text-xs font-medium text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded-full">
+          {trend} <ArrowUpRight className="w-3 h-3" />
         </div>
       </div>
-      <p className="text-muted-foreground text-sm font-semibold">{title}</p>
-      <h3 className="text-4xl font-extrabold tracking-tighter mt-1 text-foreground">{value}</h3>
-      <p className="text-xs text-muted-foreground mt-2 font-medium">{sub}</p>
+      <p className="text-sm font-medium text-zinc-400">{title}</p>
+      <h3 className="text-3xl font-semibold tracking-tight text-white mt-1">{value}</h3>
+      <p className="text-xs text-zinc-500 mt-2">{sub}</p>
     </motion.div>
   );
 
   return (
-    <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
+    <motion.div variants={container} initial="hidden" animate="show" className="p-8 space-y-8 bg-[#09090b] min-h-screen text-white">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight">Campus Overview</h2>
-          <p className="text-muted-foreground mt-1">Live metrics and analytics for the entire institution.</p>
+          <h2 className="text-2xl font-semibold tracking-tight">System Overview</h2>
+          <p className="text-zinc-400 mt-1 text-sm">Real-time metrics and campus utilization.</p>
+        </div>
+        <div className="flex gap-3">
+          <button className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+            <CalendarDays className="w-4 h-4 text-zinc-400" />
+            Current Semester
+          </button>
+          <button className="px-4 py-2 bg-white text-black hover:bg-zinc-200 rounded-lg text-sm font-medium transition-colors">
+            Generate Report
+          </button>
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Users" value="1,248" sub="Active across 3 institutions" icon={Users} colorClass="bg-primary text-primary" />
-        <StatCard title="Departments" value="12" sub="Fully configured" icon={Building2} colorClass="bg-secondary text-secondary" />
-        <StatCard title="Active Courses" value="342" sub="Running this semester" icon={BookOpen} colorClass="bg-accent text-accent" />
-        <StatCard title="Critical Conflicts" value="0" sub="All schedules resolved" icon={AlertCircle} colorClass="bg-emerald-500 text-emerald-500" />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard title="Total Users" value="1,248" sub="Active across 3 institutions" icon={Users} trend="+12%" />
+        <StatCard title="Departments" value="12" sub="Fully configured" icon={Building2} trend="+0%" />
+        <StatCard title="Active Courses" value="342" sub="Running this semester" icon={BookOpen} trend="+4%" />
+        <StatCard title="System Health" value="100%" sub="All services operational" icon={Activity} trend="+0%" />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <motion.div variants={item} className="lg:col-span-2 bg-card rounded-3xl p-6 shadow-soft border border-border/50">
-          <div className="mb-6">
-            <h3 className="text-lg font-bold">Campus Network Load</h3>
-            <p className="text-sm text-muted-foreground font-medium">Active sessions throughout the day</p>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <motion.div variants={item} className="lg:col-span-2 bg-[#0e0e11] border border-white/5 rounded-2xl p-6">
+          <div className="mb-6 flex justify-between items-center">
+            <div>
+              <h3 className="text-sm font-medium text-white">Network Load</h3>
+              <p className="text-xs text-zinc-500 mt-1">Active sessions throughout the day</p>
+            </div>
           </div>
-          <div className="h-[300px] w-full">
+          <div className="h-[280px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={activityData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorLoad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#818cf8" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
-                <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-muted-foreground)' }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-muted-foreground)' }} />
-                <Tooltip cursor={{ stroke: 'var(--color-border)', strokeWidth: 2, strokeDasharray: '4 4' }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 8px 30px rgba(0,0,0,0.1)' }} />
-                <Area type="monotone" dataKey="load" stroke="var(--color-primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorLoad)" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#71717a' }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#71717a' }} dx={-10} />
+                <Tooltip 
+                  cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }} 
+                  contentStyle={{ backgroundColor: '#18181b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }} 
+                  itemStyle={{ color: '#818cf8' }}
+                />
+                <Area type="monotone" dataKey="load" stroke="#818cf8" strokeWidth={2} fillOpacity={1} fill="url(#colorLoad)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </motion.div>
 
-        <motion.div variants={item} className="bg-card rounded-3xl p-6 shadow-soft border border-border/50">
+        <motion.div variants={item} className="bg-[#0e0e11] border border-white/5 rounded-2xl p-6">
           <div className="mb-6">
-            <h3 className="text-lg font-bold">Room Utilization</h3>
-            <p className="text-sm text-muted-foreground font-medium">Capacity usage by department</p>
+            <h3 className="text-sm font-medium text-white">Room Utilization</h3>
+            <p className="text-xs text-zinc-500 mt-1">Capacity usage by department</p>
           </div>
-          <div className="h-[300px] w-full">
+          <div className="h-[280px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={usageData} layout="vertical" margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="var(--color-border)" />
+                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="rgba(255,255,255,0.05)" />
                 <XAxis type="number" hide />
-                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-muted-foreground)' }} width={40} />
-                <Tooltip cursor={{fill: 'var(--color-muted)', opacity: 0.2}} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 8px 30px rgba(0,0,0,0.1)' }} />
-                <Bar dataKey="usage" fill="var(--color-secondary)" radius={[0, 8, 8, 0]} barSize={24} />
+                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#71717a' }} width={35} />
+                <Tooltip cursor={{fill: 'rgba(255,255,255,0.02)'}} contentStyle={{ backgroundColor: '#18181b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }} />
+                <Bar dataKey="usage" fill="#3f3f46" radius={[0, 4, 4, 0]} barSize={16}>
+                  {usageData.map((entry, index) => (
+                    <cell key={`cell-${index}`} fill={entry.usage > 80 ? '#818cf8' : '#3f3f46'} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>

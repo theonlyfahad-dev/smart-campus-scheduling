@@ -96,13 +96,8 @@
     border-color: var(--color-border);
   }
   body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
-    /* Soft ambient background gradients */
-    background-image: 
-      radial-gradient(circle at top right, rgba(124,92,252,0.04), transparent 500px),
-      radial-gradient(circle at bottom left, rgba(0,194,168,0.04), transparent 500px);
-    background-attachment: fixed;
+    background-color: #09090b;
+    color: #fafafa;
   }
 }
 
